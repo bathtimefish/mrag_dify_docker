@@ -5,6 +5,11 @@
 主要な変更を記録します。本プロジェクトは
 [Semantic Versioning](https://semver.org/lang/ja/)に従います。
 
+## 未リリース
+
+- 人間と自動化エージェント向けの初回セットアップRunbookを英日2版で追加しました。
+- 検証処理が設定済みのDifyおよびmrag host portを参照するようにしました。
+
 ## 1.0.0 - 2026-08-04
 
 最初の一般公開releaseです。

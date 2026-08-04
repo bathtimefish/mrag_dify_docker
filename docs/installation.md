@@ -2,6 +2,10 @@
 
 [日本語](./installation-ja.md) · [Back to README](../README.md)
 
+For a guarded, executable first installation with stop conditions and recovery
+advice, use the [First-time setup runbook](../SETUP.md). This page is the shorter
+installation reference.
+
 ## 1. Choose a profile
 
 Set `OLLAMA_ACCELERATOR` and `DOCLING_ACCELERATOR` independently in `.env`.

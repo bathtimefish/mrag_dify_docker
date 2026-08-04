@@ -104,12 +104,22 @@ foreach ($service in $expectedInitializers) {
 }
 
 $envPath = Join-Path $script:RepositoryRoot ".env"
-$mragPort = Get-DotEnvValue $envPath "MRAG_EXPOSE_PORT"
+$difyPort = $env:EXPOSE_NGINX_PORT
+if ([string]::IsNullOrWhiteSpace($difyPort)) {
+    $difyPort = Get-DotEnvValue $envPath "EXPOSE_NGINX_PORT"
+}
+if ([string]::IsNullOrWhiteSpace($difyPort)) {
+    $difyPort = "80"
+}
+$mragPort = $env:MRAG_EXPOSE_PORT
+if ([string]::IsNullOrWhiteSpace($mragPort)) {
+    $mragPort = Get-DotEnvValue $envPath "MRAG_EXPOSE_PORT"
+}
 if ([string]::IsNullOrWhiteSpace($mragPort)) {
     $mragPort = "8000"
 }
-Test-HttpEndpoint "http://127.0.0.1/install"
-Test-HttpEndpoint "http://127.0.0.1/console/api/setup"
+Test-HttpEndpoint "http://127.0.0.1:$difyPort/install"
+Test-HttpEndpoint "http://127.0.0.1:$difyPort/console/api/setup"
 Test-HttpEndpoint "http://127.0.0.1:$mragPort/openapi.json"
 
 $doclingProbe = @'
@@ -272,5 +282,5 @@ switch ($syncOutcome.event) {
 }
 
 Write-Host "Verification succeeded."
-Write-Host "Dify:     http://localhost/install"
+Write-Host "Dify:     http://localhost:$difyPort/install"
 Write-Host "mrag API: http://localhost:$mragPort/docs"

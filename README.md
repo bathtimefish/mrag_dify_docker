@@ -1,6 +1,6 @@
 # mrag + Dify Docker RAG
 
-[日本語](./README-ja.md) · [Installation](./docs/installation.md) · [Operations](./docs/operations.md) · [Security](./SECURITY.md)
+[日本語](./README-ja.md) · [Setup runbook](./SETUP.md) · [Installation](./docs/installation.md) · [Operations](./docs/operations.md) · [Security](./SECURITY.md)
 
 A self-hosted, Japanese-optimized Retrieval-Augmented Generation (RAG) stack
 that connects Dify with mrag. Drop documents into `kbs_docs/`; Docling converts
@@ -57,6 +57,7 @@ See [Architecture](./docs/architecture.md) for details.
 
 - Docker Engine with Docker Compose v2
 - Git and Python 3.11 or later on the host
+- `curl` on Linux and macOS
 - Internet access for the first image and model download
 - Enough memory and storage for Dify, Docling, and the selected models
 
@@ -71,27 +72,24 @@ Run these commands from the repository root:
 
 ```bash
 ./scripts/bootstrap-vendors.sh
-./scripts/init-env.sh
+if [[ -f .env ]]; then ./scripts/upgrade-env.sh; else ./scripts/init-env.sh; fi
 ./scripts/build.sh
 ./scripts/compose.sh config --quiet
 ./scripts/compose.sh up -d
 ./scripts/verify.sh
 ```
 
-If `.env` already exists, do not run `init-env.sh` again. Add newly introduced
-settings without replacing existing secrets:
-
-```bash
-./scripts/upgrade-env.sh
-```
+For prerequisite checks, GPU selection, port conflicts, first-download retries,
+and precise completion criteria, follow the [first-time setup runbook](./SETUP.md).
 
 On native Windows, use the matching `.bat` commands:
 
 ```powershell
 .\win-scripts\check-prerequisites.bat
 .\win-scripts\bootstrap-vendors.bat
-.\win-scripts\init-env.bat
+if (Test-Path .env) { .\win-scripts\upgrade-env.bat } else { .\win-scripts\init-env.bat }
 .\win-scripts\build.bat
+.\win-scripts\compose.bat config --quiet
 .\win-scripts\compose.bat up -d
 .\win-scripts\verify.bat
 ```
@@ -157,6 +155,7 @@ Read [Security](./docs/security.md), [Privacy](./docs/privacy.md), and the
 
 ## Documentation
 
+- [First-time setup runbook](./SETUP.md)
 - [Installation](./docs/installation.md)
 - [Supported platforms and sizing](./docs/supported-platforms.md)
 - [Architecture](./docs/architecture.md)

@@ -10,6 +10,7 @@ from typing import Any, Sequence
 
 PUBLIC_DOCUMENTS = (
     "README.md",
+    "SETUP.md",
     "CHANGELOG.md",
     "CODE_OF_CONDUCT.md",
     "CONTRIBUTING.md",

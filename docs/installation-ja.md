@@ -2,6 +2,9 @@
 
 [English](./installation.md) · [READMEへ戻る](../README-ja.md)
 
+停止条件と安全な対策を含む実行可能な初回installには、
+[初回セットアップRunbook](../SETUP-ja.md)を使用してください。このpageは短い参考情報です。
+
 ## 1. Profileの選択
 
 `.env`の`OLLAMA_ACCELERATOR`と`DOCLING_ACCELERATOR`を個別に設定します。

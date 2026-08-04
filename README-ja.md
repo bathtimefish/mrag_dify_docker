@@ -1,6 +1,6 @@
 # mrag + Dify Docker RAG
 
-[English](./README.md) · [インストール](./docs/installation-ja.md) · [運用](./docs/operations-ja.md) · [セキュリティ](./SECURITY-ja.md)
+[English](./README.md) · [セットアップRunbook](./SETUP-ja.md) · [インストール](./docs/installation-ja.md) · [運用](./docs/operations-ja.md) · [セキュリティ](./SECURITY-ja.md)
 
 Difyとmragを接続する、セルフホスト型の日本語向けRAG基盤です。`kbs_docs/`へ文書を
 配置すると、DoclingがMarkdownへ変換し、mragがindexを作成し、DifyからExternal
@@ -54,6 +54,7 @@ Difyとmragは別々のQdrantを使用します。PostgreSQL、Redis、Qdrant、
 
 - Docker EngineとDocker Compose v2
 - ホスト操作用のGitとPython 3.11以降
+- LinuxとmacOSでは`curl`
 - 初回のimageおよびモデル取得に使うinternet接続
 - Dify、Docling、選択したモデルに十分なmemoryとstorage
 
@@ -67,27 +68,24 @@ DockerからApple MetalをOllamaコンテナへ渡せないため、CPU profile�
 
 ```bash
 ./scripts/bootstrap-vendors.sh
-./scripts/init-env.sh
+if [[ -f .env ]]; then ./scripts/upgrade-env.sh; else ./scripts/init-env.sh; fi
 ./scripts/build.sh
 ./scripts/compose.sh config --quiet
 ./scripts/compose.sh up -d
 ./scripts/verify.sh
 ```
 
-既に`.env`が存在する場合は`init-env.sh`を再実行しないでください。既存の秘密値を
-変更せず、新しい設定だけを追加します。
-
-```bash
-./scripts/upgrade-env.sh
-```
+前提条件、GPU選択、port競合、初回downloadの再試行、正確な完了条件は、
+[初回セットアップRunbook](./SETUP-ja.md)に従ってください。
 
 Windowsネイティブでは対応する`.bat`を使用します。
 
 ```powershell
 .\win-scripts\check-prerequisites.bat
 .\win-scripts\bootstrap-vendors.bat
-.\win-scripts\init-env.bat
+if (Test-Path .env) { .\win-scripts\upgrade-env.bat } else { .\win-scripts\init-env.bat }
 .\win-scripts\build.bat
+.\win-scripts\compose.bat config --quiet
 .\win-scripts\compose.bat up -d
 .\win-scripts\verify.bat
 ```
@@ -149,6 +147,7 @@ cp /absolute/path/to/document.pdf ./kbs_docs/
 
 ## ドキュメント
 
+- [初回セットアップRunbook](./SETUP-ja.md)
 - [インストール](./docs/installation-ja.md)
 - [対応環境とサイジング](./docs/supported-platforms-ja.md)
 - [アーキテクチャ](./docs/architecture-ja.md)

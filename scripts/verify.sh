@@ -5,6 +5,16 @@ root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 compose="$root_dir/scripts/compose.sh"
 timeout_seconds="${VERIFY_TIMEOUT_SECONDS:-240}"
 
+dotenv_value() {
+  local key="$1"
+  sed -n "s/^${key}=//p" "$root_dir/.env" | tail -n 1 | tr -d '\r'
+}
+
+dify_port="${EXPOSE_NGINX_PORT:-$(dotenv_value EXPOSE_NGINX_PORT)}"
+dify_port="${dify_port:-80}"
+mrag_port="${MRAG_EXPOSE_PORT:-$(dotenv_value MRAG_EXPOSE_PORT)}"
+mrag_port="${mrag_port:-8000}"
+
 expected_services=(
   agent_backend
   api
@@ -96,13 +106,13 @@ if missing:
 
 curl --fail --silent --show-error \
   --retry 12 --retry-delay 2 --retry-connrefused \
-  "http://127.0.0.1/install" >/dev/null
+  "http://127.0.0.1:${dify_port}/install" >/dev/null
 curl --fail --silent --show-error \
   --retry 12 --retry-delay 2 --retry-connrefused \
-  "http://127.0.0.1/console/api/setup" >/dev/null
+  "http://127.0.0.1:${dify_port}/console/api/setup" >/dev/null
 curl --fail --silent --show-error \
   --retry 12 --retry-delay 2 --retry-connrefused \
-  "http://127.0.0.1:${MRAG_EXPOSE_PORT:-8000}/openapi.json" >/dev/null
+  "http://127.0.0.1:${mrag_port}/openapi.json" >/dev/null
 
 # Verify the internal-only Docling endpoint, authentication, and pinned version.
 "$compose" exec -T docling-serve python -c '
@@ -277,5 +287,5 @@ case "$sync_event" in
 esac
 
 echo "Verification succeeded."
-echo "Dify:     http://localhost/install"
-echo "mrag API: http://localhost:${MRAG_EXPOSE_PORT:-8000}/docs"
+echo "Dify:     http://localhost:${dify_port}/install"
+echo "mrag API: http://localhost:${mrag_port}/docs"

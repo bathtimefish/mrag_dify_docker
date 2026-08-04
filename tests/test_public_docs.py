@@ -36,9 +36,9 @@ def test_private_development_documents_are_ignored() -> None:
     required = {
         "/.private-docs/",
         "/TODO.md",
-        "/SETUP.md",
         "/specs/",
         "/docs/docling-ingestion-spec.md",
         "/docs/docling-ingestion-todo.md",
     }
     assert required.issubset(set(ignore.splitlines()))
+    assert "/SETUP.md" not in set(ignore.splitlines())
