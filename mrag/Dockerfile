@@ -1,4 +1,4 @@
-FROM python:3.12-slim-bookworm@sha256:d50fb7611f86d04a3b0471b46d7557818d88983fc3136726336b2a4c657aa30b AS vaporetto
+FROM python:3.14-slim-bookworm@sha256:86f975aca15cf04a40b399eebede9aea7c82eae084d1f1a0a6ef6bcaae871a30 AS vaporetto
 
 ARG TARGETARCH
 ARG SQLITE_VAPORETTO_VERSION=0.4.0
@@ -28,7 +28,7 @@ RUN set -eux; \
        "/tmp/sqlite-vaporetto/${release_root}/MODEL_LICENSES.md" \
        /opt/sqlite-vaporetto/doc/
 
-FROM python:3.12-slim-bookworm@sha256:d50fb7611f86d04a3b0471b46d7557818d88983fc3136726336b2a4c657aa30b
+FROM python:3.14-slim-bookworm@sha256:86f975aca15cf04a40b399eebede9aea7c82eae084d1f1a0a6ef6bcaae871a30
 
 ARG MRAG_SOURCE_COMMIT=84e6ca99bebfe58dcd6c358aacdcc61d7d83eb49
 ARG SQLITE_VAPORETTO_VERSION=0.4.0
