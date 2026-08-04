@@ -95,7 +95,7 @@ numpy==2.4.5
     #   scipy
     #   sentence-transformers
     #   transformers
-nvidia-cublas==13.1.1.3 ; sys_platform == 'linux'
+nvidia-cublas==13.6.1.10 ; sys_platform == 'linux'
     # via
     #   nvidia-cudnn-cu13
     #   nvidia-cusolver
