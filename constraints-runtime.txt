@@ -142,7 +142,7 @@ packaging==26.2
     #   transformers
 portalocker==3.2.0
     # via qdrant-client
-protobuf==7.34.1
+protobuf==7.35.1
     # via qdrant-client
 pydantic==2.13.4
     # via
