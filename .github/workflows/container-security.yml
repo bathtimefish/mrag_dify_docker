@@ -15,7 +15,7 @@ jobs:
   build-sbom-scan:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
       - name: Build custom images
@@ -35,7 +35,7 @@ jobs:
           severity: HIGH,CRITICAL
           ignore-unfixed: true
       - name: Upload scan results
-        uses: github/codeql-action/upload-sarif@eb3cef721752a3421fe144a742539281bdf4df1a # v3
+        uses: github/codeql-action/upload-sarif@e60ea984bd3baa95954f2856bcf24f9eaba46637 # v3
         if: always()
         with:
           sarif_file: trivy-runtime.sarif
