@@ -8,6 +8,10 @@ updates:
       github-actions:
         patterns: ["*"]
   - package-ecosystem: docker
-    directory: /
+    directory: /batch
+    schedule:
+      interval: monthly
+  - package-ecosystem: docker
+    directory: /mrag
     schedule:
       interval: monthly
