@@ -26,6 +26,7 @@ jobs:
           image: local/mrag-runtime:1.0.0
           artifact-name: mrag-runtime-1.0.0.spdx.json
           format: spdx-json
+          upload-release-assets: false
       - name: Scan runtime image
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
@@ -36,6 +37,6 @@ jobs:
           ignore-unfixed: true
       - name: Upload scan results
         uses: github/codeql-action/upload-sarif@d1ba80a13dd99fba24a470575428917156a28b43 # v4
-        if: always()
+        if: ${{ always() && hashFiles('trivy-runtime.sarif') != '' }}
         with:
           sarif_file: trivy-runtime.sarif
