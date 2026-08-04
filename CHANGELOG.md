@@ -5,7 +5,7 @@
 All notable changes are documented here. This project follows
 [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 1.0.1 - 2026-08-04
 
 - Added a bilingual first-time setup runbook for people and automation agents.
 - Made verification honor the configured Dify and mrag host ports.

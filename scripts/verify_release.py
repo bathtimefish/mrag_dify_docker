@@ -88,8 +88,8 @@ def validate_versions(root: Path, versions: dict[str, str]) -> list[str]:
     for key in sorted(required):
         if not versions.get(key):
             errors.append(f"VERSIONS is missing {key}")
-    if versions.get("PROJECT_VERSION") != "1.0.0":
-        errors.append("PROJECT_VERSION must be 1.0.0 for this release")
+    if versions.get("PROJECT_VERSION") != "1.0.1":
+        errors.append("PROJECT_VERSION must be 1.0.1 for this release")
     for key in ("OLLAMA_IMAGE", "MRAG_QDRANT_IMAGE"):
         value = versions.get(key, "")
         if "@sha256:" not in value:

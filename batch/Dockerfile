@@ -2,7 +2,7 @@ ARG MRAG_RUNTIME_IMAGE=local/mrag-runtime:1.0.0
 FROM ${MRAG_RUNTIME_IMAGE}
 
 ARG MRAG_SOURCE_COMMIT=84e6ca99bebfe58dcd6c358aacdcc61d7d83eb49
-ARG PROJECT_VERSION=1.0.0
+ARG PROJECT_VERSION=1.0.1
 
 LABEL org.opencontainers.image.title="mrag synchronization batch"
 LABEL org.opencontainers.image.revision="${MRAG_SOURCE_COMMIT}"
