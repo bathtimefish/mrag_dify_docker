@@ -1,0 +1,11 @@
+**
+!vendor/
+!vendor/mrag/
+!vendor/mrag/**
+!mrag/
+!mrag/**
+!batch/
+!batch/**
+!constraints-runtime.txt
+!LICENSE
+!THIRD_PARTY_NOTICES.md

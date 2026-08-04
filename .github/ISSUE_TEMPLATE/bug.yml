@@ -1,0 +1,31 @@
+name: Bug report
+description: Report reproducible incorrect behavior
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Do not report vulnerabilities here. Remove secrets and confidential document details.
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Host OS and Docker version
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description and reproduction steps
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Redacted diagnostics
+      description: Remove API keys, document names and contents, hostnames, and public IPs.

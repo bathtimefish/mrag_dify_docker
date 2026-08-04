@@ -1,0 +1,25 @@
+{
+  "document": {
+    "filename": "sample.txt",
+    "md_content": "Emergency shutdown procedure: close the main valve and notify the control room.",
+    "json_content": null,
+    "html_content": null,
+    "text_content": null,
+    "doctags_content": null,
+    "doclang_content": null
+  },
+  "status": "success",
+  "errors": [],
+  "processing_time": 0.005035693000081665,
+  "timings": {},
+  "confidence": {
+    "parse_score": null,
+    "layout_score": null,
+    "table_score": null,
+    "ocr_score": null,
+    "mean_score": null,
+    "low_score": null,
+    "mean_grade": "unspecified",
+    "low_grade": "unspecified"
+  }
+}

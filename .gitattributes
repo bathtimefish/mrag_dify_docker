@@ -1,0 +1,10 @@
+# Container entrypoints must remain LF even when Git for Windows uses autocrlf.
+*.sh text eol=lf
+*.py text eol=lf
+Dockerfile text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+
+# Native Windows launchers use conventional Windows line endings.
+*.ps1 text eol=crlf
+*.bat text eol=crlf

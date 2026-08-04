@@ -1,0 +1,212 @@
+services:
+  docling-serve:
+    image: ghcr.io/docling-project/docling-serve-cpu:v1.28.0@sha256:cc207e1eb768878456ed98042c5d84fae56af3729a9c03d3e5c8fef393902956
+    user: "1001"
+    restart: unless-stopped
+    environment:
+      DOCLING_SERVE_API_KEY: ${DOCLING_SERVE_API_KEY:?DOCLING_SERVE_API_KEY must be set}
+      DOCLING_SERVE_ENABLE_UI: "false"
+      UVICORN_WORKERS: ${DOCLING_WORKERS:-1}
+    volumes:
+      - docling_model_cache:/opt/app-root/src/.cache/docling/models
+    cpus: ${DOCLING_CPUS:-8.0}
+    mem_limit: ${DOCLING_MEMORY_LIMIT:-12g}
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5001/health', timeout=3)"
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+
+  ollama:
+    image: ollama/ollama:0.32.3@sha256:ec24bcaa2a810eb74171ce7c517813ef4821ed678988845e8d76cf62467036d4
+    restart: unless-stopped
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:-10m}
+    volumes:
+      - ollama_models:/root/.ollama
+    healthcheck:
+      test:
+        - CMD
+        - ollama
+        - list
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
+
+  ollama-model-init:
+    image: ollama/ollama:0.32.3@sha256:ec24bcaa2a810eb74171ce7c517813ef4821ed678988845e8d76cf62467036d4
+    restart: "no"
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      OLLAMA_MODEL: ${MRAG_EMBEDDING_MODEL:-bge-m3:latest}
+      OLLAMA_MODEL_MANIFEST_SHA256: ${MRAG_EMBEDDING_MODEL_MANIFEST_SHA256:-7907646426070047a77226ac3e684fbbe8410524f7b4a74d02837e43f2146bab}
+      MODEL_DOWNLOAD_OFFLINE: ${MODEL_DOWNLOAD_OFFLINE:-false}
+      OLLAMA_STORAGE_ROOT: /models
+    entrypoint: ["/bin/sh"]
+    command: ["/usr/local/bin/ollama-model-init.sh"]
+    volumes:
+      - ollama_models:/models:ro
+      - ../../../scripts/ollama-model-init.sh:/usr/local/bin/ollama-model-init.sh:ro
+    depends_on:
+      ollama:
+        condition: service_healthy
+
+  mrag-doctor:
+    profiles:
+      - tools
+    image: local/mrag-runtime:1.0.0
+    user: 10001:10001
+    network_mode: service:ollama
+    command:
+      - mrag
+      - doctor
+    depends_on:
+      ollama:
+        condition: service_healthy
+
+  mrag-qdrant:
+    image: qdrant/qdrant:v1.18.3@sha256:0bd98fa7977f1e75694779359ca4e212822e5a71334e28421182f72f209d5286
+    restart: unless-stopped
+    volumes:
+      - mrag_qdrant_data:/qdrant/storage
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - bash -c ':> /dev/tcp/127.0.0.1/6333'
+      interval: 10s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+  mrag-init:
+    build:
+      context: ../../..
+      dockerfile: mrag/Dockerfile
+    image: local/mrag-runtime:1.0.0
+    restart: "no"
+    command: ["/app/mrag/init-project.sh"]
+    environment: &mrag-environment
+      TZ: ${TZ:-Asia/Tokyo}
+      MRAG_PROJECT_DIR: /data/mrag
+      MRAG_PROJECT_NAME: ${MRAG_PROJECT_NAME:-main-kb}
+      MRAG_KNOWLEDGE_ID: ${MRAG_KNOWLEDGE_ID:-main_kb}
+      MRAG_API_KEY: ${MRAG_API_KEY:?MRAG_API_KEY must be set}
+      MRAG_OLLAMA_URL: ${MRAG_OLLAMA_URL:-http://ollama:11434}
+      MRAG_EMBEDDING_MODEL: ${MRAG_EMBEDDING_MODEL:-bge-m3:latest}
+      MRAG_QDRANT_HOST: ${MRAG_QDRANT_HOST:-mrag-qdrant}
+      MRAG_QDRANT_PORT: ${MRAG_QDRANT_PORT:-6333}
+      MRAG_RERANK_ENABLED: ${MRAG_RERANK_ENABLED:-true}
+      MRAG_RERANK_MODEL: ${MRAG_RERANK_MODEL:-hotchpotch/japanese-reranker-cross-encoder-small-v1}
+      MRAG_RERANK_REVISION: ${MRAG_RERANK_REVISION:-d7462bce0b065e0624028b412693dec055d719a0}
+      MODEL_DOWNLOAD_OFFLINE: ${MODEL_DOWNLOAD_OFFLINE:-false}
+      MRAG_RERANK_MAX_LENGTH: ${MRAG_RERANK_MAX_LENGTH:-512}
+      MRAG_RERANK_TOP_N: ${MRAG_RERANK_TOP_N:-30}
+    volumes:
+      - mrag_data:/data/mrag
+      # Profiles are bind mounted so default.yaml and context_prompt.txt can be
+      # edited from the host (e.g. to change augmentation or retrieval strategy).
+      # Nested on top of mrag_data; the project DB stays in the named volume.
+      - ../../../mrag_profiles:/data/mrag/profiles
+      - mrag_model_cache:/home/mrag/.cache
+    depends_on:
+      ollama-model-init:
+        condition: service_completed_successfully
+      mrag-qdrant:
+        condition: service_healthy
+
+  mrag-api:
+    image: local/mrag-runtime:1.0.0
+    user: 10001:10001
+    restart: unless-stopped
+    command: ["/app/mrag/api-entrypoint.sh"]
+    environment: *mrag-environment
+    volumes:
+      - mrag_data:/data/mrag
+      - ../../../mrag_profiles:/data/mrag/profiles
+      - mrag_model_cache:/home/mrag/.cache
+    ports:
+      - 127.0.0.1:${MRAG_EXPOSE_PORT:-8000}:8000
+    depends_on:
+      mrag-init:
+        condition: service_completed_successfully
+      mrag-qdrant:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/openapi.json', timeout=3)"
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  mrag-batch:
+    build:
+      context: ../../..
+      dockerfile: batch/Dockerfile
+      args:
+        MRAG_RUNTIME_IMAGE: local/mrag-runtime:1.0.0
+        MRAG_SOURCE_COMMIT: 84e6ca99bebfe58dcd6c358aacdcc61d7d83eb49
+    image: local/mrag-batch:1.0.0
+    restart: unless-stopped
+    command: ["/app/batch/cron-entrypoint.sh"]
+    environment:
+      <<: *mrag-environment
+      MRAG_SOURCE_DIR: /kbs_docs
+      MRAG_BACKUP_DIR: /backups
+      MRAG_CRON_SCHEDULE: ${MRAG_CRON_SCHEDULE:-0 */3 * * *}
+      MRAG_DELETE_MAX_PERCENT: ${MRAG_DELETE_MAX_PERCENT:-20}
+      MRAG_DELETE_MAX_COUNT: ${MRAG_DELETE_MAX_COUNT:-50}
+      MRAG_BACKUP_RETENTION: ${MRAG_BACKUP_RETENTION:-7}
+      DOCLING_SERVE_URL: ${DOCLING_SERVE_URL:-http://docling-serve:5001}
+      DOCLING_SERVE_API_KEY: ${DOCLING_SERVE_API_KEY:?DOCLING_SERVE_API_KEY must be set}
+      DOCLING_ACCELERATOR: ${DOCLING_ACCELERATOR:-cpu}
+      DOCLING_SUPPORTED_EXTENSIONS: ${DOCLING_SUPPORTED_EXTENSIONS:-.pdf,.md,.txt,.docx,.xlsx,.pptx,.png,.jpg,.jpeg,.tif,.tiff,.bmp,.webp}
+      DOCLING_OUTPUT_FORMAT: ${DOCLING_OUTPUT_FORMAT:-md}
+      DOCLING_IMAGE_EXPORT_MODE: ${DOCLING_IMAGE_EXPORT_MODE:-placeholder}
+      DOCLING_OCR_ENABLED: ${DOCLING_OCR_ENABLED:-true}
+      DOCLING_OCR_LANGUAGES: ${DOCLING_OCR_LANGUAGES:-ja,en}
+      DOCLING_OCR_PRESET: ${DOCLING_OCR_PRESET:-}
+      DOCLING_TABLE_MODE: ${DOCLING_TABLE_MODE:-accurate}
+      DOCLING_PIPELINE: ${DOCLING_PIPELINE:-}
+      DOCLING_PDF_BACKEND: ${DOCLING_PDF_BACKEND:-}
+      DOCLING_MAX_FILE_SIZE: ${DOCLING_MAX_FILE_SIZE:-}
+      DOCLING_MAX_NUM_PAGES: ${DOCLING_MAX_NUM_PAGES:-}
+      DOCLING_MAX_OUTPUT_SIZE: ${DOCLING_MAX_OUTPUT_SIZE:-}
+      DOCLING_CONNECTION_TIMEOUT_SECONDS: ${DOCLING_CONNECTION_TIMEOUT_SECONDS:-30}
+      DOCLING_CONVERSION_TIMEOUT_SECONDS: ${DOCLING_CONVERSION_TIMEOUT_SECONDS:-1800}
+      DOCLING_RUN_TIMEOUT_SECONDS: ${DOCLING_RUN_TIMEOUT_SECONDS:-}
+      DOCLING_POLL_INTERVAL_SECONDS: ${DOCLING_POLL_INTERVAL_SECONDS:-2}
+      DOCLING_MAX_RETRIES: ${DOCLING_MAX_RETRIES:-3}
+      DOCLING_BATCH_CONCURRENCY: ${DOCLING_BATCH_CONCURRENCY:-1}
+    volumes:
+      - mrag_data:/data/mrag
+      - ../../../mrag_profiles:/data/mrag/profiles
+      - ../../../kbs_docs:/kbs_docs:ro
+      - mrag_backups:/backups
+      - mrag_converted_docs:/data/converted-docs
+    depends_on:
+      docling-serve:
+        condition: service_healthy
+      mrag-init:
+        condition: service_completed_successfully
+      mrag-qdrant:
+        condition: service_healthy
+
+volumes:
+  docling_model_cache:
+  mrag_converted_docs:
+  ollama_models:
+  mrag_data:
+  mrag_qdrant_data:
+  mrag_backups:
+  mrag_model_cache:

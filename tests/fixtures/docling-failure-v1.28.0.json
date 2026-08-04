@@ -1,0 +1,24 @@
+{
+    "document": {
+        "filename": "broken.pdf",
+        "md_content": null,
+        "json_content": null,
+        "html_content": null,
+        "text_content": null,
+        "doctags_content": null,
+        "doclang_content": null
+    },
+    "status": "failure",
+    "errors": [
+        {
+            "component_type": "user_input",
+            "module_name": "",
+            "error_message": "docling-parse could not load document 681d739a6a328836e538f268864f8babf0d5dd576e1e42e8c7cbced114baf021: Failed to load document (PDFium: Data format error).",
+            "category": "backend_failure",
+            "page_no": null
+        }
+    ],
+    "processing_time": 0.0009143459974438883,
+    "timings": {},
+    "confidence": null
+}

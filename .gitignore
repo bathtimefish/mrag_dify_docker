@@ -1,0 +1,88 @@
+# OS and editor metadata
+.DS_Store
+._*
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+/secrets/
+/certs/
+/certbot/
+/letsencrypt/
+*.key
+*.pem
+*.p12
+*.pfx
+
+# Local diagnostics and temporary files
+/.tmp/
+*.log
+*.tmp
+*.bak
+
+# Python environments, bytecode, tests, and build products
+.venv/
+venv/
+env/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.hypothesis/
+.mypy_cache/
+.pyright/
+.ruff_cache/
+.tox/
+build/
+dist/
+*.egg-info/
+
+# Runtime data and generated configuration
+/volumes/
+/backups/
+/data/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+sync-manifest.json
+.sync.lock
+celerybeat-schedule*
+vendor/dify/docker/.env
+vendor/dify/docker/volumes/
+
+# Dify is pinned by commit and re-cloned by scripts/bootstrap-vendors.sh.
+# mrag is a git submodule, so its gitlink is tracked and must not be ignored.
+vendor/dify/
+
+# Knowledge documents are runtime/business data, not repository source.
+/kbs_docs/*
+!/kbs_docs/.gitkeep
+
+# mrag profiles are exposed on the host for local editing. They are created by
+# `mrag init` and rewritten by mrag/configure_project.py at startup, so they are
+# runtime state rather than repository source.
+/mrag_profiles/*
+!/mrag_profiles/.gitkeep
+
+# Private development material is intentionally excluded from public releases.
+/.private-docs/
+/TODO.md
+/SETUP.md
+/specs/
+/docs/docling-api-contract.md
+/docs/docling-ingestion-spec.md
+/docs/docling-ingestion-todo.md
+/docs/docling-licenses.md

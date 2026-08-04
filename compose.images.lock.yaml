@@ -1,0 +1,33 @@
+# Active Dify images resolved for the 1.0.0 release on 2026-08-04.
+# Keep this file in sync with VERSIONS and the pinned Dify Compose source.
+services:
+  init_permissions:
+    image: busybox:1.36@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662
+  api:
+    image: langgenius/dify-api:1.16.0@sha256:bd3e8b15cfc47e89dc7a0d17431e6f3289244f4b442b96e2372bd0f0646f3d58
+  worker:
+    image: langgenius/dify-api:1.16.0@sha256:bd3e8b15cfc47e89dc7a0d17431e6f3289244f4b442b96e2372bd0f0646f3d58
+  worker_beat:
+    image: langgenius/dify-api:1.16.0@sha256:bd3e8b15cfc47e89dc7a0d17431e6f3289244f4b442b96e2372bd0f0646f3d58
+  api_websocket:
+    image: langgenius/dify-api:1.16.0@sha256:bd3e8b15cfc47e89dc7a0d17431e6f3289244f4b442b96e2372bd0f0646f3d58
+  web:
+    image: langgenius/dify-web:1.16.0@sha256:f29179e7257b607c63e2d53567e3c216b04df49e4629999e58a0b7eb49ab5578
+  db_postgres:
+    image: postgres:15-alpine@sha256:3d0f7584ed7d04e27fa050d6683a74746608faf21f202be78460d679cc56461f
+  redis:
+    image: redis:6-alpine@sha256:ec5e187c913d422cdf60f4216a5fdfb95246792c6de6fe21ff5bed75cbfc8c23
+  sandbox:
+    image: langgenius/dify-sandbox:0.2.15@sha256:750e1111426ef31a9217b81c98cccfb750f17b182af3221102e420afa9f0928e
+  local_sandbox:
+    image: langgenius/dify-agent-local-sandbox:1.16.0@sha256:d2bcd9fda2cb5b47568a69a7f701af525aee32ee18d66fb160b9c998d206d453
+  plugin_daemon:
+    image: langgenius/dify-plugin-daemon:0.6.3-local@sha256:3c694329357bc580b28bdec59321a981acd3279f8f69d1a3fb59a47cf7f770c3
+  agent_backend:
+    image: langgenius/dify-agent-backend:1.16.0@sha256:ec78d36a0a3a47ffd6aacd05507e72d42cd0730612026b27acaccf62df223efb
+  ssrf_proxy:
+    image: ubuntu/squid:latest@sha256:6a097f68bae708cedbabd6188d68c7e2e7a38cedd05a176e1cc0ba29e3bbe029
+  nginx:
+    image: nginx:latest@sha256:5a88c9c45479443d7be2eadc894b4ed0a9801bae03d97a5760ae13b5c2005942
+  qdrant:
+    image: langgenius/qdrant:v1.8.3@sha256:2d8c82e5b661238dad184edc111887a5af14bb386e92f51ecb22570198e11336

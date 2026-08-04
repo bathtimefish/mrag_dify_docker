@@ -1,0 +1,3 @@
+[submodule "vendor/mrag"]
+	path = vendor/mrag
+	url = https://github.com/bathtimefish/mrag.git

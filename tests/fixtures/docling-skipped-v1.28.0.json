@@ -1,0 +1,24 @@
+{
+    "document": {
+        "filename": "thing.xyz",
+        "md_content": null,
+        "json_content": null,
+        "html_content": null,
+        "text_content": null,
+        "doctags_content": null,
+        "doclang_content": null
+    },
+    "status": "skipped",
+    "errors": [
+        {
+            "component_type": "user_input",
+            "module_name": "",
+            "error_message": "File format not allowed: thing.xyz",
+            "category": "policy",
+            "page_no": null
+        }
+    ],
+    "processing_time": 0.0009243219974450767,
+    "timings": {},
+    "confidence": null
+}

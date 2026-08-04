@@ -1,0 +1,11 @@
+services:
+  docling-serve:
+    image: ghcr.io/docling-project/docling-serve-cu128:v1.28.0@sha256:83de50eb65da256584d692c9e2e521df4b3c4b599024f6a844a190de9fc89dcd
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities:
+                - gpu
