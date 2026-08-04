@@ -1,0 +1,1 @@
+This temporary file validates pull-request security workflows before v1.0.0.
