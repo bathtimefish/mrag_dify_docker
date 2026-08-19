@@ -533,8 +533,60 @@ def _safe_relative_path(value: str) -> PurePosixPath:
 
 
 def converted_relative_path(source_relative_path: str) -> str:
+    """Map a source path to its published Markdown path.
+
+    The original extension is kept so that ``device.docx`` and ``device.pdf``
+    cannot claim the same output. A source that is already Markdown needs no
+    such separation and would only gain a second ``.md`` that readers see in
+    Dify's citations, so it publishes under its own name.
+    """
     source = _safe_relative_path(source_relative_path)
+    if source.suffix.lower() == ".md":
+        return source.as_posix()
     return f"{source.as_posix()}.md"
+
+
+def partition_output_collisions(
+    source_groups: Sequence[SourceGroup],
+) -> tuple[tuple[SourceGroup, ...], tuple[SourceIssue, ...]]:
+    """Split off sources whose output path another source already claims.
+
+    Markdown sources keeping their own name is what makes a collision possible
+    at all: ``report.docx`` and a file literally named ``report.docx.md`` both
+    want ``report.docx.md``. Publishing both would let conversion order decide
+    which one survives, so the first claim in path order keeps the name — the
+    original document, since it is a prefix of the name derived from it — and
+    the rest are reported as source issues instead of being converted.
+    """
+    claimed: dict[str, str] = {}
+    dropped: set[str] = set()
+    issues: list[SourceIssue] = []
+    for group in sorted(
+        source_groups, key=lambda item: item.representative.relative_path
+    ):
+        relative_path = group.representative.relative_path
+        output = converted_relative_path(relative_path)
+        owner = claimed.get(output)
+        if owner is None:
+            claimed[output] = relative_path
+            continue
+        dropped.add(relative_path)
+        issues.append(
+            SourceIssue.normalized(
+                relative_path=relative_path,
+                code="output_path_conflict",
+                message=(
+                    f"converted path {output!r} is already produced by "
+                    f"{owner!r}; rename one of the two sources"
+                ),
+            )
+        )
+    kept = tuple(
+        group
+        for group in source_groups
+        if group.representative.relative_path not in dropped
+    )
+    return kept, tuple(sorted(issues, key=lambda issue: issue.relative_path))
 
 
 def _resolve_managed_path(root: Path, relative_path: str) -> Path:

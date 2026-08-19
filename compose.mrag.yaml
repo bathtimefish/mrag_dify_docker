@@ -163,6 +163,9 @@ services:
       <<: *mrag-environment
       MRAG_SOURCE_DIR: /kbs_docs
       MRAG_BACKUP_DIR: /backups
+      # Must match the mrag_converted_docs mount point below: the entrypoint
+      # chowns this path so the unprivileged sync can write to it.
+      MRAG_CONVERTED_ROOT: /data/converted-docs
       MRAG_CRON_SCHEDULE: ${MRAG_CRON_SCHEDULE:-0 */3 * * *}
       MRAG_DELETE_MAX_PERCENT: ${MRAG_DELETE_MAX_PERCENT:-20}
       MRAG_DELETE_MAX_COUNT: ${MRAG_DELETE_MAX_COUNT:-50}

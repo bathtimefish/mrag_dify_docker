@@ -7,9 +7,14 @@ if [[ "$schedule" == *$'\n'* ]]; then
   exit 2
 fi
 
+# Every named volume this service mounts starts out root-owned, but the
+# synchronization always runs as mrag: manually through `compose exec --user
+# mrag`, and on schedule through the `su` below. Each mount point therefore has
+# to be handed over here, or the first write into it fails with EACCES.
 chown -R mrag:mrag \
   "${MRAG_PROJECT_DIR:-/data/mrag}" \
-  "${MRAG_BACKUP_DIR:-/backups}"
+  "${MRAG_BACKUP_DIR:-/backups}" \
+  "${MRAG_CONVERTED_ROOT:-/data/converted-docs}"
 
 cat >/etc/cron.d/mrag-sync <<EOF
 SHELL=/bin/bash
@@ -18,6 +23,7 @@ TZ=${TZ:-Asia/Tokyo}
 MRAG_PROJECT_DIR=${MRAG_PROJECT_DIR:-/data/mrag}
 MRAG_SOURCE_DIR=${MRAG_SOURCE_DIR:-/kbs_docs}
 MRAG_BACKUP_DIR=${MRAG_BACKUP_DIR:-/backups}
+MRAG_CONVERTED_ROOT=${MRAG_CONVERTED_ROOT:-/data/converted-docs}
 MRAG_DELETE_MAX_PERCENT=${MRAG_DELETE_MAX_PERCENT:-20}
 MRAG_DELETE_MAX_COUNT=${MRAG_DELETE_MAX_COUNT:-50}
 MRAG_BACKUP_RETENTION=${MRAG_BACKUP_RETENTION:-7}

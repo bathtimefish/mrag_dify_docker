@@ -45,6 +45,7 @@ from docling_ingestion import (
     find_orphan_artifacts,
     group_sources,
     load_conversion_manifest,
+    partition_output_collisions,
     run_conversion_pipeline,
     scan_sources,
     write_conversion_manifest,
@@ -573,7 +574,18 @@ def run_docling_phase(
         settings.supported_extensions,
         max_file_size=settings.max_file_size,
     )
-    groups = group_sources(scan.documents)
+    groups, collision_issues = partition_output_collisions(
+        group_sources(scan.documents)
+    )
+    # Reported like any other unusable source: the run continues without the
+    # loser of the collision rather than publishing whichever of the two
+    # finished converting last.
+    source_issues = tuple(
+        sorted(
+            (*scan.issues, *collision_issues),
+            key=lambda issue: issue.relative_path,
+        )
+    )
     artifact_store = ArtifactStore(converted_root)
     manifest_path = converted_root / "conversion-manifest.json"
     previous_manifest = load_conversion_manifest(manifest_path)
@@ -607,7 +619,7 @@ def run_docling_phase(
         )
         emit(
             "conversion_plan",
-            source_issues=len(scan.issues),
+            source_issues=len(source_issues),
             dry_run=True,
             **plan.summary(),
         )
@@ -624,7 +636,7 @@ def run_docling_phase(
         )
         if guard:
             emit("conversion_deletion_guard_warning", reason=guard)
-        for issue in scan.issues:
+        for issue in source_issues:
             emit(
                 "source_validation_failed",
                 relative_path=issue.relative_path,
@@ -636,7 +648,7 @@ def run_docling_phase(
     run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
     result = run_conversion_pipeline(
         source_groups=groups,
-        source_issues=scan.issues,
+        source_issues=source_issues,
         previous_manifest=previous_manifest,
         artifact_store=artifact_store,
         client=HttpDoclingClient(),

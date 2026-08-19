@@ -22,6 +22,7 @@ from docling_ingestion import (
     build_conversion_plan,
     group_sources,
     load_conversion_manifest,
+    partition_output_collisions,
     scan_sources,
 )
 
@@ -42,9 +43,18 @@ def _plan_payload(
 ) -> dict[str, object]:
     store = ArtifactStore(converted_dir)
     scan = scan_sources(source_dir)
+    groups, collision_issues = partition_output_collisions(
+        group_sources(scan.documents)
+    )
+    source_issues = tuple(
+        sorted(
+            (*scan.issues, *collision_issues),
+            key=lambda issue: issue.relative_path,
+        )
+    )
     manifest = _load_manifest(converted_dir)
     plan: ConversionPlan = build_conversion_plan(
-        group_sources(scan.documents),
+        groups,
         manifest,
         conversion_fingerprint=fingerprint,
         output_exists=lambda relative: store.current_path(relative).is_file(),
@@ -55,7 +65,7 @@ def _plan_payload(
         "summary": {
             **plan.summary(),
             "source_documents": len(scan.documents),
-            "source_issues": len(scan.issues),
+            "source_issues": len(source_issues),
         },
         "documents": [
             {
@@ -82,7 +92,7 @@ def _plan_payload(
                 "code": issue.code,
                 "message": issue.message,
             }
-            for issue in scan.issues
+            for issue in source_issues
         ],
     }
 

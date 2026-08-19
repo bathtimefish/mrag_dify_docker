@@ -317,10 +317,45 @@ class TestPathsAndMarkdown:
             == "manuals/a b [rev#1].docx.md"
         )
 
+    def test_keeps_markdown_sources_at_their_own_name(self) -> None:
+        assert ingestion.converted_relative_path("notes/report.md") == "notes/report.md"
+        assert ingestion.converted_relative_path("notes/report.MD") == "notes/report.MD"
+        # Only Markdown is already in the published format; .txt still converts.
+        assert ingestion.converted_relative_path("notes/report.txt") == (
+            "notes/report.txt.md"
+        )
+
     @pytest.mark.parametrize("path", ["../escape.pdf", "/absolute.pdf", ""])
     def test_rejects_unsafe_paths(self, path: str) -> None:
         with pytest.raises(ingestion.UnsafePathError):
             ingestion.converted_relative_path(path)
+
+    def test_keeps_the_original_document_when_outputs_collide(self) -> None:
+        kept, issues = ingestion.partition_output_collisions(
+            (
+                source_group(("manuals/device.docx.md",), digest="copy-hash"),
+                source_group(("manuals/device.docx",), digest="source-hash"),
+            )
+        )
+
+        assert [group.representative.relative_path for group in kept] == [
+            "manuals/device.docx"
+        ]
+        assert [issue.relative_path for issue in issues] == ["manuals/device.docx.md"]
+        assert issues[0].code == "output_path_conflict"
+        assert "manuals/device.docx" in issues[0].message
+
+    def test_leaves_distinct_outputs_in_their_original_order(self) -> None:
+        groups = (
+            source_group(("manuals/device.pdf",), digest="pdf-hash"),
+            source_group(("manuals/device.docx",), digest="docx-hash"),
+            source_group(("manuals/device.md",), digest="md-hash"),
+        )
+
+        kept, issues = ingestion.partition_output_collisions(groups)
+
+        assert kept == groups
+        assert issues == ()
 
     def test_adds_source_header_to_partial_markdown(self) -> None:
         result = ingestion.build_published_markdown(
@@ -925,6 +960,73 @@ class TestConversionPipeline:
         assert forced.documents[0].reason == "forced re-conversion"
         # A forced run must not delete more than a normal one would.
         assert forced.summary()["remove"] == normal.summary()["remove"] == 1
+
+    def test_publishes_markdown_sources_without_a_second_extension(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        groups = (source_group(("reports/incident.md",), "hash-a"),)
+        client = FakeDoclingClient(
+            {
+                "reports/incident.md": ingestion.ConversionAttempt(
+                    status=ingestion.ConversionStatus.SUCCESS,
+                    markdown="# Incident",
+                    task_id="task-a",
+                ),
+            }
+        )
+
+        result = self.run(tmp_path=tmp_path, groups=groups, client=client)
+
+        assert result.manifest.documents[0].output_relative_path == (
+            "reports/incident.md"
+        )
+        published = tmp_path / "converted" / "current" / "reports" / "incident.md"
+        assert published.is_file()
+        assert not published.with_name("incident.md.md").exists()
+
+    def test_migrates_an_existing_double_extension_artifact(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        # What an install converted before the naming rule changed: the source is
+        # untouched, so only the output path differs from what it would produce now.
+        store = ingestion.ArtifactStore(tmp_path / "converted")
+        store.prepare()
+        stale = store.current_root / "reports" / "incident.md.md"
+        stale.parent.mkdir(parents=True, exist_ok=True)
+        stale.write_text("# Incident", encoding="utf-8")
+        previous = conversion_manifest(
+            conversion_record(
+                source_sha256="hash-a",
+                source_paths=("reports/incident.md",),
+                representative_path="reports/incident.md",
+                output_relative_path="reports/incident.md.md",
+            )
+        )
+        groups = (source_group(("reports/incident.md",), "hash-a"),)
+        client = FakeDoclingClient(
+            {
+                "reports/incident.md": ingestion.ConversionAttempt(
+                    status=ingestion.ConversionStatus.SUCCESS,
+                    markdown="# Incident",
+                    task_id="task-a",
+                ),
+            }
+        )
+
+        result = self.run(
+            tmp_path=tmp_path,
+            groups=groups,
+            client=client,
+            previous_manifest=previous,
+        )
+
+        assert result.plan.documents[0].reason == "converted output path changed"
+        assert (store.current_root / "reports" / "incident.md").is_file()
+        assert not stale.exists()
+        # The rename is not a deletion: the guard must not see it as one.
+        assert result.plan.removal_count() == 0
 
     def test_deletion_guard_aborts_before_converting_or_removing_anything(
         self,
