@@ -21,7 +21,7 @@ jobs:
       - name: Build custom images
         run: ./scripts/build.sh
       - name: Generate runtime SBOM
-        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0
+        uses: anchore/sbom-action@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26 # v0.24.2
         with:
           image: local/mrag-runtime:1.0.0
           artifact-name: mrag-runtime-1.0.0.spdx.json
@@ -36,7 +36,7 @@ jobs:
           severity: HIGH,CRITICAL
           ignore-unfixed: true
       - name: Upload scan results
-        uses: github/codeql-action/upload-sarif@d1ba80a13dd99fba24a470575428917156a28b43 # v4
+        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
         if: ${{ always() && hashFiles('trivy-runtime.sarif') != '' }}
         with:
           sarif_file: trivy-runtime.sarif
